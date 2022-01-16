@@ -54,7 +54,6 @@ class RegisterWindow(tkinter.Tk):
                 "password": password,
                 "full_name": fullname,
                 "last_name": lastname,
-                "group_chats": [],
                 "friends": []}
         r = requests.post("http://127.0.0.1:8000/register", data=json.dumps(data))
         if r.json() == "False":
