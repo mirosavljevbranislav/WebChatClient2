@@ -11,7 +11,7 @@ class RegisterWindow(tkinter.Tk):
         super().__init__()
         self.logged_label = Label(self, text="")
         self.unavailable_username = Label(self, text="")
-        self.geometry('700x250')
+        self.geometry('700x300')
         self.title('Register')
         self.resizable(False, False)
 
@@ -37,7 +37,12 @@ class RegisterWindow(tkinter.Tk):
         self.lastname_entry = Text(self, bg="gray", height=1, width=20)
         self.lastname_entry.grid(column=2, row=7)
 
-        Button(self, text="Register", command=self.store_user_request).grid(column=2, row=8,)
+        Label(self, text="Email").grid(column=2, row=8)
+        self.email_entry = Text(self, bg="gray", height=1, width=25)
+        self.email_entry.grid(column=2, row=9)
+
+        self.empty_fields_label = Label(self, text="All fields must be filled.", foreground="red")
+        Button(self, text="Register", command=self.store_user_request).grid(column=2, row=10)
         self.mainloop()
 
     def store_user_request(self):
@@ -49,21 +54,28 @@ class RegisterWindow(tkinter.Tk):
         password = self.password_entry.get()
         fullname = self.fullname_entry.get("1.0", "end-1c")
         lastname = self.lastname_entry.get("1.0", "end-1c")
+        email = self.email_entry.get("1.0", "end-1c")
 
         data = {"username": username,
                 "password": password,
                 "full_name": fullname,
                 "last_name": lastname,
+                "email": email,
                 "friends": []}
-        r = requests.post("http://127.0.0.1:8000/register", data=json.dumps(data))
-        if r.json() == "False":
-            self.username_label.config(foreground="red")
-            self.logged_label.destroy()
-            self.create_unavailable_username_label()
-        elif r.json() == "True":
-            self.username_label.config(foreground="black")
-            self.unavailable_username.destroy()
-            self.create_successfully_registered_label()
+        if not self.empty_fields_check():
+            self.empty_fields_label.grid(column=1, row=10)
+        else:
+            r = requests.post("http://127.0.0.1:8000/register", data=json.dumps(data))
+            if r.json() == "False":
+                self.username_label.config(foreground="red")
+                self.logged_label.grid_forget()
+                self.empty_fields_label.grid_forget()
+                self.create_unavailable_username_label()
+            elif r.json() == "True":
+                self.username_label.config(foreground="black")
+                self.unavailable_username.grid_forget()
+                self.empty_fields_label.grid_forget()
+                self.create_successfully_registered_label()
 
     def create_unavailable_username_label(self):
         self.unavailable_username = Label(self, text="Username already in use", foreground="red")
@@ -79,3 +91,11 @@ class RegisterWindow(tkinter.Tk):
         self.logged_label = Label(self, text="Successfully registered!", foreground="green")
         self.logged_label.grid(column=3, row=8, pady=18)
         self.mainloop()
+
+    def empty_fields_check(self):
+        if len(self.username_entry.get("1.0", "end")) > 1 and len(self.password_entry.get()) > 1 and \
+                len(self.fullname_entry.get("1.0", "end")) > 1 and len(self.lastname_entry.get("1.0", "end")) > 1 and \
+                len(self.email_entry.get("1.0", "end")) >= 10:
+            return True
+        else:
+            return False
